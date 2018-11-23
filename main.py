@@ -13,10 +13,10 @@ import numpy as np
 
 mediaType = "video"  # image / video
 imageFolder = "/media/sf_VMshare/pics"
-videoFile = "/media/sf_VMshare/test.avi"
+videoFile = "/media/sf_VMshare/DSC_1322.MOV"
 videoOutFile = "/media/sf_VMshare/test_out.avi"
 
-datasetPath = "eyeAutoLabled/"
+datasetPath = "/media/sf_VMshare/facialDataset"
 imgPath = "images/"
 labelPath = "labels/"
 imgType = "jpg"  # jpg, png
