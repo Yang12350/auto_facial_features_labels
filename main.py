@@ -54,6 +54,25 @@ def chkEnv():
     if not os.path.exists(datasetPath + labelPath):
         os.makedirs(datasetPath + labelPath)
 
+def getEyebrowShapes(landmarks):
+    #right eye: 17~21
+    #left eye: 22~26
+    right_eyebrows = []
+    left_eyebrows = []
+
+    for id in range(17,22):
+        right_eyebrows.append((landmarks.part(id).x, landmarks.part(id).y))
+
+    for id in range(22,27):
+        left_eyebrows.append((landmarks.part(id).x, landmarks.part(id).y))
+
+    eyebrows_right_np = np.array(right_eyebrows)
+    eyebrows_left_np = np.array(left_eyebrows)
+    bbox_right = cv2.boundingRect(eyebrows_right_np)
+    bbox_left = cv2.boundingRect(eyebrows_left_np)
+
+    return bbox_left, bbox_right
+
 def getEyeShapes(landmarks):
     #right eye: 36~41
     #left eye: 42~47
@@ -74,18 +93,45 @@ def getEyeShapes(landmarks):
     return bbox_left, bbox_right
 
 def getNoseShapes(landmarks):
-    #right eye: 36~41
-    #left eye: 42~47
-    eyes = []
+    #nose: 27~35
+    nose = []
 
-    for id in range(36,42):
-        eyes.append((landmarks.part(id).x, landmarks.part(id).y))
+    for id in range(27,36):
+        nose.append((landmarks.part(id).x, landmarks.part(id).y))
 
-    for id in range(42,48):
-        eyes.append((landmarks.part(id).x, landmarks.part(id).y))
+    nose_np = np.array(nose)
+    bbox = cv2.boundingRect(nose_np)
 
-    eyes_np = np.array(eyes)
-    bbox = cv2.boundingRect(eyes_np)
+    return bbox
+
+def getMouthShapes(landmarks):
+    #outer: 48~59
+    #inner: 60~67
+    outer_mouth = []
+    inner_mouth = []
+
+    for id in range(48,60):
+        outer_mouth.append((landmarks.part(id).x, landmarks.part(id).y))
+
+    for id in range(60,68):
+        inner_mouth.append((landmarks.part(id).x, landmarks.part(id).y))
+
+    outer_mouth_np = np.array(outer_mouth)
+    inner_mouth_np = np.array(inner_mouth)
+    bbox_outer_mouth = cv2.boundingRect(outer_mouth_np)
+    bbox_inner_mouth = cv2.boundingRect(inner_mouth_np)
+
+    return bbox_outer_mouth, bbox_inner_mouth
+
+def getChinShapes(landmarks):
+    #nose: 0~16
+    chin = []
+
+    for id in range(0,17):
+        chin.append((landmarks.part(id).x, landmarks.part(id).y))
+
+    chin_np = np.array(chin)
+    bbox = cv2.boundingRect(chin_np)
 
     return bbox
 
@@ -141,15 +187,38 @@ def labelFacial(img):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     rects = detector( gray , dlib_detectorRatio)
 
+    BBOX_leftEyebrow = []
+    BBOX_rightEyebrow = []
     BBOX_leftEye = []
     BBOX_rightEye = []
+    BBOX_nose = []
+    BBOX_outer_mouth = []
+    BBOX_inner_mouth = []
+    BBOX_chin = []
     for faceid, rect in enumerate(rects):
         shape = predictor(gray, rect)
+
+        bbox_leftEyebrow, bbox_rightEyebrow = getEyebrowShapes(shape)
+        BBOX_leftEyebrow.append(bbox_leftEyebrow)
+        BBOX_rightEyebrow.append(bbox_rightEyebrow)
+
         bbox_leftEye, bbox_rightEye = getEyeShapes(shape)
         BBOX_leftEye.append(bbox_leftEye)
         BBOX_rightEye.append(bbox_rightEye)
 
-    BBOX_facials = { "lefteye":BBOX_leftEye, "righteye":BBOX_rightEye }
+        bbox_nose = getNoseShapes(shape)
+        BBOX_nose.append(bbox_nose)
+
+        bbox_outer_mouth, bbox_inner_mouth = getMouthShapes(shape)
+        BBOX_outer_mouth.append(bbox_outer_mouth)
+        BBOX_inner_mouth.append(bbox_inner_mouth)
+
+        bbox_chin = getChinShapes(shape)
+        BBOX_chin.append(bbox_chin)
+
+    BBOX_facials = { "lefteyebrow": BBOX_leftEyebrow, "righteyebrow": BBOX_rightEyebrow,\
+        "lefteye":BBOX_leftEye, "righteye":BBOX_rightEye, "nose":BBOX_nose,\
+        "outter_mouth": BBOX_outer_mouth, "inner_mouth": BBOX_inner_mouth, "chin":BBOX_chin }
     #BBOX_facials.append(BBOX_leftEye)
     #BBOX_facials.append(BBOX_rightEye)
 
