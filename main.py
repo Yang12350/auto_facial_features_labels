@@ -13,7 +13,7 @@ import numpy as np
 
 mediaType = "video"  # image / video
 imageFolder = "/media/sf_VMshare/pics"
-videoFile = "/media/sf_VMshare/VIRB0047.MP4"
+videoFile = "/media/sf_VMshare/test.avi"
 videoOutFile = "/media/sf_VMshare/test_out.avi"
 
 datasetPath = "eyeAutoLabled/"
@@ -21,7 +21,6 @@ imgPath = "images/"
 labelPath = "labels/"
 imgType = "jpg"  # jpg, png
 
-labelName = "eyes"
 minEyeSize = (10, 10)
 maxImageWidth = 2000
 
@@ -58,6 +57,25 @@ def chkEnv():
 def getEyeShapes(landmarks):
     #right eye: 36~41
     #left eye: 42~47
+    right_eyes = []
+    left_eyes = []
+
+    for id in range(36,42):
+        right_eyes.append((landmarks.part(id).x, landmarks.part(id).y))
+
+    for id in range(42,48):
+        left_eyes.append((landmarks.part(id).x, landmarks.part(id).y))
+
+    eyes_right_np = np.array(right_eyes)
+    eyes_left_np = np.array(left_eyes)
+    bbox_right = cv2.boundingRect(eyes_right_np)
+    bbox_left = cv2.boundingRect(eyes_left_np)
+
+    return bbox_left, bbox_right
+
+def getNoseShapes(landmarks):
+    #right eye: 36~41
+    #left eye: 42~47
     eyes = []
 
     for id in range(36,42):
@@ -85,8 +103,10 @@ def writeObjects(label, bbox):
 
 def generateXML(img, filename, fullpath, bboxes):
     xmlObject = ""
-    for bbox in bboxes:
-        xmlObject = xmlObject + writeObjects(labelName, bbox)
+
+    for labelName, bbox_array in bboxes.items():
+        for bbox in bbox_array:
+            xmlObject = xmlObject + writeObjects(labelName, bbox)
 
     with open(xml_file) as file:
         xmlfile = file.read()
@@ -112,7 +132,7 @@ def makeLabelFile(img, bboxes):
     file.write(xmlContent)
     file.close
 
-def labelEyes(img):
+def labelFacial(img):
     detector = dlib.get_frontal_face_detector()
 
     if(img.shape[1]>maxImageWidth):
@@ -121,15 +141,21 @@ def labelEyes(img):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     rects = detector( gray , dlib_detectorRatio)
 
-    eyesBBOX = []
+    BBOX_leftEye = []
+    BBOX_rightEye = []
     for faceid, rect in enumerate(rects):
         shape = predictor(gray, rect)
-        eyes_bbox = getEyeShapes(shape)
-        eyesBBOX.append(eyes_bbox)
+        bbox_leftEye, bbox_rightEye = getEyeShapes(shape)
+        BBOX_leftEye.append(bbox_leftEye)
+        BBOX_rightEye.append(bbox_rightEye)
 
-    makeLabelFile(img, eyesBBOX)
+    BBOX_facials = { "lefteye":BBOX_leftEye, "righteye":BBOX_rightEye }
+    #BBOX_facials.append(BBOX_leftEye)
+    #BBOX_facials.append(BBOX_rightEye)
 
-    return eyesBBOX
+    makeLabelFile(img, BBOX_facials)
+
+    return BBOX_facials
 
 #--------------------------------------------
 
@@ -164,10 +190,11 @@ elif(mediaType=="video"):
     while grabbed:
         i += 1
         (grabbed, frame) = camera.read()
-        eyes = labelEyes(frame)
+        dictBBOXES = labelFacial(frame)
 
-        for eye in eyes:
-            cv2.rectangle( frame,(eye[0],eye[1]),(eye[0]+eye[2],eye[1]+eye[3]),(0,255,0),2)
+        for labelName, bbox_array in dictBBOXES.items():
+            for bbox in bbox_array:
+                cv2.rectangle( frame,(bbox[0],bbox[1]),(bbox[0]+bbox[2],bbox[1]+bbox[3]),(0,255,0),2)
 
         if(videoOutFile != ""):
             out.write(frame)
