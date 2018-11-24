@@ -12,16 +12,16 @@ import numpy as np
 #-------------------------------------------
 
 mediaType = "video"  # image / video
-imageFolder = "/media/sf_VMshare/pics"
-videoFile = "/media/sf_VMshare/DSC_1322.MOV"
-videoOutFile = "/media/sf_VMshare/test_out.avi"
+imageFolder = "/media/sf_ShareFolder/pics"
+videoFile = "/media/sf_ShareFolder/door_in_source.avi"
+videoOutFile = "/media/sf_ShareFolder/door.avi"
 
-datasetPath = "/media/sf_VMshare/facialDataset"
+datasetPath = "/media/sf_ShareFolder/facialDataset/"
 imgPath = "images/"
 labelPath = "labels/"
 imgType = "jpg"  # jpg, png
 
-minEyeSize = (10, 10)
+minFaceSize = (60, 60)
 maxImageWidth = 2000
 
 landmarksDB = "dlib/shape_predictor_68_face_landmarks.dat"
@@ -187,44 +187,57 @@ def labelFacial(img):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     rects = detector( gray , dlib_detectorRatio)
 
-    BBOX_leftEyebrow = []
-    BBOX_rightEyebrow = []
-    BBOX_leftEye = []
-    BBOX_rightEye = []
-    BBOX_nose = []
-    BBOX_outer_mouth = []
-    BBOX_inner_mouth = []
-    BBOX_chin = []
-    for faceid, rect in enumerate(rects):
-        shape = predictor(gray, rect)
+    if(len(rects)>0):
+        BBOX_faces = []
+        BBOX_leftEyebrow = []
+        BBOX_rightEyebrow = []
+        BBOX_leftEye = []
+        BBOX_rightEye = []
+        BBOX_nose = []
+        BBOX_outer_mouth = []
+        BBOX_inner_mouth = []
+        BBOX_chin = []
 
-        bbox_leftEyebrow, bbox_rightEyebrow = getEyebrowShapes(shape)
-        BBOX_leftEyebrow.append(bbox_leftEyebrow)
-        BBOX_rightEyebrow.append(bbox_rightEyebrow)
+        ii = 0
+        for faceid, rect in enumerate(rects):
+            (x, y, w, h) = rect_to_bb(rect)
+            if(w>minFaceSize[0] and h>minFaceSize[1]):
+                BBOX_faces.append((x,y,w,h))
 
-        bbox_leftEye, bbox_rightEye = getEyeShapes(shape)
-        BBOX_leftEye.append(bbox_leftEye)
-        BBOX_rightEye.append(bbox_rightEye)
+                shape = predictor(gray, rect)
 
-        bbox_nose = getNoseShapes(shape)
-        BBOX_nose.append(bbox_nose)
+                bbox_leftEyebrow, bbox_rightEyebrow = getEyebrowShapes(shape)
+                BBOX_leftEyebrow.append(bbox_leftEyebrow)
+                BBOX_rightEyebrow.append(bbox_rightEyebrow)
 
-        bbox_outer_mouth, bbox_inner_mouth = getMouthShapes(shape)
-        BBOX_outer_mouth.append(bbox_outer_mouth)
-        BBOX_inner_mouth.append(bbox_inner_mouth)
+                bbox_leftEye, bbox_rightEye = getEyeShapes(shape)
+                BBOX_leftEye.append(bbox_leftEye)
+                BBOX_rightEye.append(bbox_rightEye)
 
-        bbox_chin = getChinShapes(shape)
-        BBOX_chin.append(bbox_chin)
+                bbox_nose = getNoseShapes(shape)
+                BBOX_nose.append(bbox_nose)
 
-    BBOX_facials = { "lefteyebrow": BBOX_leftEyebrow, "righteyebrow": BBOX_rightEyebrow,\
-        "lefteye":BBOX_leftEye, "righteye":BBOX_rightEye, "nose":BBOX_nose,\
-        "outter_mouth": BBOX_outer_mouth, "inner_mouth": BBOX_inner_mouth, "chin":BBOX_chin }
-    #BBOX_facials.append(BBOX_leftEye)
-    #BBOX_facials.append(BBOX_rightEye)
+                bbox_outer_mouth, bbox_inner_mouth = getMouthShapes(shape)
+                BBOX_outer_mouth.append(bbox_outer_mouth)
+                BBOX_inner_mouth.append(bbox_inner_mouth)
 
-    makeLabelFile(img, BBOX_facials)
+                bbox_chin = getChinShapes(shape)
+                BBOX_chin.append(bbox_chin)
 
-    return BBOX_facials
+                ii += 1
+
+        if(ii>0):
+            BBOX_facials = { "face": BBOX_faces, "lefteyebrow": BBOX_leftEyebrow, "righteyebrow": BBOX_rightEyebrow,\
+                "lefteye":BBOX_leftEye, "righteye":BBOX_rightEye, "nose":BBOX_nose,\
+                "outter_mouth": BBOX_outer_mouth, "inner_mouth": BBOX_inner_mouth, "chin":BBOX_chin }
+
+            makeLabelFile(img, BBOX_facials)
+
+    else:
+        ii = 0
+        BBOX_facials = {}
+
+    return ii, BBOX_facials
 
 #--------------------------------------------
 
@@ -259,11 +272,12 @@ elif(mediaType=="video"):
     while grabbed:
         i += 1
         (grabbed, frame) = camera.read()
-        dictBBOXES = labelFacial(frame)
+        numFace, dictBBOXES = labelFacial(frame)
 
-        for labelName, bbox_array in dictBBOXES.items():
-            for bbox in bbox_array:
-                cv2.rectangle( frame,(bbox[0],bbox[1]),(bbox[0]+bbox[2],bbox[1]+bbox[3]),(0,255,0),2)
+        if(numFace>0):
+            for labelName, bbox_array in dictBBOXES.items():
+                for bbox in bbox_array:
+                    cv2.rectangle( frame,(bbox[0],bbox[1]),(bbox[0]+bbox[2],bbox[1]+bbox[3]),(0,255,0),2)
 
         if(videoOutFile != ""):
             out.write(frame)
