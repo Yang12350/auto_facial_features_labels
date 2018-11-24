@@ -226,12 +226,12 @@ def labelFacial(img):
 
                 ii += 1
 
-        if(ii>0):
-            BBOX_facials = { "face": BBOX_faces, "lefteyebrow": BBOX_leftEyebrow, "righteyebrow": BBOX_rightEyebrow,\
-                "lefteye":BBOX_leftEye, "righteye":BBOX_rightEye, "nose":BBOX_nose,\
-                "outter_mouth": BBOX_outer_mouth, "inner_mouth": BBOX_inner_mouth, "chin":BBOX_chin }
+            if(ii>0):
+                BBOX_facials = { "face": BBOX_faces, "lefteyebrow": BBOX_leftEyebrow, "righteyebrow": BBOX_rightEyebrow,\
+                    "lefteye":BBOX_leftEye, "righteye":BBOX_rightEye, "nose":BBOX_nose,\
+                    "outter_mouth": BBOX_outer_mouth, "inner_mouth": BBOX_inner_mouth, "chin":BBOX_chin }
 
-            makeLabelFile(img, BBOX_facials)
+                makeLabelFile(img, BBOX_facials)
 
     else:
         ii = 0
