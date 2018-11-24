@@ -13,8 +13,8 @@ import numpy as np
 
 mediaType = "video"  # image / video
 imageFolder = "/media/sf_ShareFolder/pics"
-videoFile = "/media/sf_ShareFolder/door_in_source.avi"
-videoOutFile = "/media/sf_ShareFolder/door.avi"
+videoFile = "/media/sf_ShareFolder/mtv1.mp4"
+videoOutFile = "/media/sf_ShareFolder/mtv1.avi"
 
 datasetPath = "/media/sf_ShareFolder/facialDataset/"
 imgPath = "images/"
@@ -179,6 +179,9 @@ def makeLabelFile(img, bboxes):
     file.close
 
 def labelFacial(img):
+    ii = 0
+    BBOX_facials = {}
+
     detector = dlib.get_frontal_face_detector()
 
     if(img.shape[1]>maxImageWidth):
@@ -232,10 +235,6 @@ def labelFacial(img):
                     "outter_mouth": BBOX_outer_mouth, "inner_mouth": BBOX_inner_mouth, "chin":BBOX_chin }
 
                 makeLabelFile(img, BBOX_facials)
-
-    else:
-        ii = 0
-        BBOX_facials = {}
 
     return ii, BBOX_facials
 
