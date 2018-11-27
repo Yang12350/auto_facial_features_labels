@@ -11,18 +11,18 @@ import numpy as np
 
 #-------------------------------------------
 
-mediaType = "video"  # image / video
-imageFolder = "/media/sf_ShareFolder/pics"
+mediaType = "image"  # image / video / webcamera
+imageFolder = "/media/sf_faces_dataset/auto_face/faceYolo_door/images"
 videoFile = "/media/sf_ShareFolder/mtv1.mp4"
 videoOutFile = "/media/sf_ShareFolder/mtv1.avi"
 
-datasetPath = "/media/sf_ShareFolder/facialDataset/"
+datasetPath = "/media/sf_faces_dataset/auto_facial_office/"
 imgPath = "images/"
 labelPath = "labels/"
 imgType = "jpg"  # jpg, png
 
 minFaceSize = (60, 60)
-maxImageWidth = 2000
+maxImageWidth = 1200
 
 landmarksDB = "dlib/shape_predictor_68_face_landmarks.dat"
 dlib_detectorRatio = 2
@@ -254,10 +254,14 @@ if(mediaType=="image"):
             print("Processing: ", imageFolder + folderCharacter + file)
 
             image = cv2.imread(imageFolder + folderCharacter + file)
-            labelEyes(image)
+            labelFacial(image)
 
-elif(mediaType=="video"):
-    camera = cv2.VideoCapture(videoFile)
+elif(mediaType=="video" or mediaType=="webcamera"):
+    if(mediaType=="video"):
+        camera = cv2.VideoCapture(videoFile)
+    else:
+        camera = cv2.VideoCapture(0)
+
     width = int(camera.get(cv2.CAP_PROP_FRAME_WIDTH))   # float
     height = int(camera.get(cv2.CAP_PROP_FRAME_HEIGHT)) # float
 
