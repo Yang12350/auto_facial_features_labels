@@ -11,12 +11,12 @@ import numpy as np
 
 #-------------------------------------------
 
-mediaType = "image"  # image / video / webcamera
+mediaType = "video"  # image / video / webcamera
 imageFolder = "/media/sf_faces_dataset/auto_face/faceYolo_door/images"
-videoFile = "/media/sf_ShareFolder/mtv1.mp4"
-videoOutFile = "/media/sf_ShareFolder/mtv1.avi"
+videoFile = "/media/sf_VMshare/landmark.mp4"
+videoOutFile = "/media/sf_VMshare/landmark2.avi"
 
-datasetPath = "/media/sf_faces_dataset/auto_facial_office/"
+datasetPath = "/media/sf_VMshare/testlandmark/"
 imgPath = "images/"
 labelPath = "labels/"
 imgType = "jpg"  # jpg, png
@@ -184,8 +184,8 @@ def labelFacial(img):
 
     detector = dlib.get_frontal_face_detector()
 
-    if(img.shape[1]>maxImageWidth):
-        img = imutils.resize(img, width=maxImageWidth)
+    #if(img.shape[1]>maxImageWidth):
+    #    img = imutils.resize(img, width=maxImageWidth)
 
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     rects = detector( gray , dlib_detectorRatio)
@@ -254,6 +254,9 @@ if(mediaType=="image"):
             print("Processing: ", imageFolder + folderCharacter + file)
 
             image = cv2.imread(imageFolder + folderCharacter + file)
+            if(image.shape[1]>maxImageWidth):
+                image = imutils.resize(image, width=maxImageWidth)
+
             labelFacial(image)
 
 elif(mediaType=="video" or mediaType=="webcamera"):
@@ -275,17 +278,24 @@ elif(mediaType=="video" or mediaType=="webcamera"):
     while grabbed:
         i += 1
         (grabbed, frame) = camera.read()
-        numFace, dictBBOXES = labelFacial(frame)
+        if(grabbed is True):
+            if(frame.shape[1]>maxImageWidth):
+                frame = imutils.resize(frame, width=maxImageWidth)
 
-        if(numFace>0):
-            for labelName, bbox_array in dictBBOXES.items():
-                for bbox in bbox_array:
-                    cv2.rectangle( frame,(bbox[0],bbox[1]),(bbox[0]+bbox[2],bbox[1]+bbox[3]),(0,255,0),2)
+            numFace, dictBBOXES = labelFacial(frame)
 
-        if(videoOutFile != ""):
-            out.write(frame)
+            if(numFace>0):
+                for labelName, bbox_array in dictBBOXES.items():
+                    for bbox in bbox_array:
+                        cv2.rectangle( frame,(bbox[0],bbox[1]),(bbox[0]+bbox[2],bbox[1]+bbox[3]),(0,255,0),2)
 
-        cv2.imshow("FRAME", imutils.resize(frame, width=640))
-        print("Frame #{}".format(i))
+            if(videoOutFile != ""):
+                out.write(frame)
 
-        cv2.waitKey(1)
+            cv2.imshow("FRAME", imutils.resize(frame, width=640))
+            print("Frame #{}".format(i))
+
+            cv2.waitKey(1)
+
+        else:
+            out.release()
